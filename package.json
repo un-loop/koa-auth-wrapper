@@ -1,0 +1,30 @@
+{
+  "name": "koa-auth-wrapper",
+  "version": "1.0.0",
+  "description": "A koa-passport cookie based session authorization that encrypts the session key and supplies login/logout routes with login redirection support",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/un-loop/koa-auth-wrapper.git"
+  },
+  "keywords": [
+    "koa",
+    "passport",
+    "authentication",
+    "session"
+  ],
+  "author": "Michael Armes (michael@un-loop.org)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/un-loop/koa-auth-wrapper/issues"
+  },
+  "homepage": "https://github.com/un-loop/koa-auth-wrapper#readme",
+  "dependencies": {
+    "koa-compose": "^4.1.0",
+    "koa-passport": "^4.1.1",
+    "koa-route": "^3.2.0"
+  }
+}
