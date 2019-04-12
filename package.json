@@ -1,6 +1,6 @@
 {
   "name": "koa-auth-wrapper",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A koa-passport cookie based session authorization that encrypts the session key and supplies login/logout routes with login redirection support",
   "main": "index.js",
   "scripts": {

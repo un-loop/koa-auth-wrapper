@@ -19,7 +19,7 @@ module.exports = function({login, logout, encrypt, decrypt, localStrategy}) {
         }
     });
 
-    passport.deserializeUser(async function(data, done) {
+    passport.deserializeUser(function(data, done) {
         try {
             const buffer = new Buffer(data, 'base64');
             const dataObj = JSON.parse(buffer.toString('utf8'));
