@@ -2,11 +2,17 @@ const passport = require('koa-passport');
 const route = require('koa-route');
 const compose = require('koa-compose');
 
-module.exports = function({login, logout, encrypt, decrypt, localStrategy}) {
+module.exports = function({routes, encrypt, decrypt, localStrategy, changePassword}) {
 
-    if (!login || !logout || !encrypt || !decrypt || !localStrategy) {
+    if (!encrypt || !decrypt || !localStrategy) {
         throw new Error('Invalid arguments');
     }
+
+    if (!routes)  routes = {};
+    if (!routes.login) routes.login = '/login'
+    if (!routes.logout) routes.logout = '/logout'
+    if (!routes.changePassword) routes.changePassword = '/account/changePassword/'
+    if (!routes.signUp) routes.signUp = '/signup';
 
     passport.serializeUser(function(user, done) {
         try {
@@ -43,27 +49,52 @@ module.exports = function({login, logout, encrypt, decrypt, localStrategy}) {
             .catch(done)
     }));
 
-    const authenticateMiddleware = (login) => (ctx, next) => {
+    const authenticateMiddleware = (ctx, next) => {
         const successRedirect = ctx.request.body.redirect || '/';
-        const failureRedirect = `${login}?message=${encodeURI("invalid username or password")}`;
+        const failureRedirect = `${routes.login}?message=${encodeURI("invalid username or password")}`;
 
         return passport.authenticate('local', { successRedirect, failureRedirect })(ctx, next);
     }
 
-    this.middleware = () => {
-          return compose([
-              passport.initialize(),
-              passport.session(),
-              route.post(login, authenticateMiddleware(login)),
-              route.get(logout, function(ctx) {
-                if (ctx.isAuthenticated()) {
-                    ctx.logout();
-                    ctx.redirect(login);
-                  } else {
+    const logoutMiddleware = (ctx) => {
+        if (!ctx.isAuthenticated()) {
+            ctx.body = "Not Authorized";
+            ctx.throw(401);
+        }
+
+        ctx.logout();
+        ctx.redirect(routes.login);
+    }
+
+    const changePasswordMiddleware = (ctx) => {
+        if (!ctx.isAuthenticated()) {
+            ctx.body = "Not Authorized";
+            ctx.throw(401);
+        }
+
+        await changePassword(ctx.req.user, password, newPassword)
+            .then((result) => 
+            {
+                if (!result) {
                     ctx.body = "Not Authorized";
                     ctx.throw(401);
-                  }
-              })
-          ]);
+                }
+
+                ctx.body = "Success";
+                ctx.status = 200;
+            }).catch( () => {
+                ctx.body = "Internal Error";
+                ctx.status = 500;
+            });
+    }
+
+    this.middleware = () => {
+        return compose([
+            passport.initialize(),
+            passport.session(),
+            route.post(routes.login, authenticateMiddleware),
+            route.get(routes.logout, logoutMiddleware),
+            changePassword && route.post(routes.changePassword, changePasswordMiddleware)
+        ]);
     }
 }
