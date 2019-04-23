@@ -66,7 +66,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
         ctx.redirect(routes.login);
     }
 
-    const changePasswordMiddleware = (ctx) => {
+    const changePasswordMiddleware = async (ctx) => {
         if (!ctx.isAuthenticated()) {
             ctx.body = "Not Authorized";
             ctx.throw(401);
