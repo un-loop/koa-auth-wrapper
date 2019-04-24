@@ -75,7 +75,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
         let password = ctx.request.body.password;
         let newPassword = ctx.request.body.newPassword;
         await changePassword(ctx.req.user, password, newPassword)
-            .then((result) => 
+            .then((result) =>
             {
                 if (!result) {
                     ctx.body = "Not Authorized";
@@ -84,9 +84,6 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
 
                 ctx.body = "Success";
                 ctx.status = 200;
-            }).catch( () => {
-                ctx.body = "Internal Error";
-                ctx.status = 500;
             });
     }
 
