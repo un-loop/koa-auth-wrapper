@@ -67,11 +67,13 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     }
 
     const changePasswordMiddleware = async (ctx) => {
-        if (!ctx.isAuthenticated()) {
+        if (!ctx.isAuthenticated() || !ctx.request.body || !ctx.request.body.password) {
             ctx.body = "Not Authorized";
             ctx.throw(401);
         }
 
+        let password = ctx.request.body.password;
+        let newPassword = ctx.request.body.newPassword;
         await changePassword(ctx.req.user, password, newPassword)
             .then((result) => 
             {
