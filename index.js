@@ -2,6 +2,8 @@ const passport = require('koa-passport');
 const route = require('koa-route');
 const compose = require('koa-compose');
 
+// using 403 responses per this thread: https://stackoverflow.com/a/14713094/4488100
+
 module.exports = function({routes, encrypt, decrypt, localStrategy, changePassword}) {
 
     if (!encrypt || !decrypt || !localStrategy) {
@@ -59,7 +61,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     const logoutMiddleware = (ctx) => {
         if (!ctx.isAuthenticated()) {
             ctx.body = "Not Authorized";
-            ctx.throw(401);
+            ctx.throw(403);
         }
 
         ctx.logout();
@@ -69,7 +71,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     const changePasswordMiddleware = async (ctx) => {
         if (!ctx.isAuthenticated() || !ctx.request.body || !ctx.request.body.password) {
             ctx.body = "Not Authorized";
-            ctx.throw(401);
+            ctx.throw(403);
         }
 
         let password = ctx.request.body.password;
@@ -79,7 +81,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
             {
                 if (!result) {
                     ctx.body = "Not Authorized";
-                    ctx.throw(401);
+                    ctx.throw(403);
                 }
 
                 ctx.body = "Success";
