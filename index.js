@@ -76,6 +76,12 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
 
         let password = ctx.request.body.password;
         let newPassword = ctx.request.body.newPassword;
+
+        if (password === newPassword) {
+            ctx.body = "Must select a new password";
+            ctx.throw(400);
+        }
+
         await changePassword(ctx.req.user, password, newPassword)
             .then((result) =>
             {
