@@ -4,16 +4,17 @@ const compose = require('koa-compose');
 
 // using 403 responses per this thread: https://stackoverflow.com/a/14713094/4488100
 
-module.exports = function({routes, encrypt, decrypt, localStrategy, changePassword}) {
+module.exports = function({routes, encrypt, decrypt, localStrategy, changePassword, changeAccountDetails}) {
 
     if (!encrypt || !decrypt || !localStrategy) {
         throw new Error('Invalid arguments');
     }
 
-    if (!routes)  routes = {};
+    if (!routes) routes = {};
     if (!routes.login) routes.login = '/login'
     if (!routes.logout) routes.logout = '/logout'
     if (!routes.changePassword) routes.changePassword = '/account/changePassword/'
+    if (!routes.changeAccoutDetails) routes.changeAccoutDetails = '/account/changeAccountDetails/';
     if (!routes.signUp) routes.signUp = '/signup';
 
     passport.serializeUser(function(user, done) {
@@ -95,13 +96,39 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
             });
     }
 
+    const changeAccountDetailsMiddleware = async (ctx) => {
+        if (!ctx.isAuthenticated() || !ctx.request.body || !ctx.request.body.password) {
+            ctx.body = "Not Authorized";
+            ctx.throw(403);
+        }
+
+        const {password, confirm, ...details} = ctx.request.body;
+
+        await changeAccoutDetails(ctx.req.user, details)
+            .then((result) =>
+            {
+                if (!result) {
+                    ctx.body = "Not Authorized";
+                    ctx.throw(403);
+                }
+
+                ctx.body = "Success";
+                ctx.status = 200;
+            });
+
+        }
+
     this.middleware = () => {
-        return compose([
+
+        const middleware = [
             passport.initialize(),
             passport.session(),
             route.post(routes.login, authenticateMiddleware),
             route.get(routes.logout, logoutMiddleware),
-            changePassword && route.post(routes.changePassword, changePasswordMiddleware)
-        ]);
+            changePassword && route.post(routes.changePassword, changePasswordMiddleware),
+            changeAccountDetails && route.post(routes.changeAccountDetails, changeAccountDetailsMiddleware)
+        ].filter(m => m);
+
+        return compose(middleware);
     }
 }
