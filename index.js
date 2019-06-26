@@ -14,7 +14,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     if (!routes.login) routes.login = '/login'
     if (!routes.logout) routes.logout = '/logout'
     if (!routes.changePassword) routes.changePassword = '/account/changePassword/'
-    if (!routes.changeAccoutDetails) routes.changeAccoutDetails = '/account/changeAccountDetails/';
+    if (!routes.changeAccoutDetails) routes.changeAccountDetails = '/account/changeAccountDetails/';
     if (!routes.signUp) routes.signUp = '/signup';
 
     passport.serializeUser(function(user, done) {
