@@ -14,7 +14,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     if (!routes.login) routes.login = '/login'
     if (!routes.logout) routes.logout = '/logout'
     if (!routes.changePassword) routes.changePassword = '/account/changePassword/'
-    if (!routes.changeAccoutDetails) routes.changeAccountDetails = '/account/changeAccountDetails/';
+    if (!routes.changeAccountDetails) routes.changeAccountDetails = '/account/changeAccountDetails/';
     if (!routes.signUp) routes.signUp = '/signup';
 
     passport.serializeUser(function(user, done) {
@@ -104,7 +104,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
 
         const {password, confirm, ...details} = ctx.request.body;
 
-        await changeAccoutDetails(ctx.req.user, details)
+        await changeAccountDetails(ctx.req.user, details)
             .then((result) =>
             {
                 if (!result) {
