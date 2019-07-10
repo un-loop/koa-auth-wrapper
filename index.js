@@ -104,7 +104,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
 
         const {password, confirm, ...details} = ctx.request.body;
 
-        await changeAccountDetails(ctx.req.user, details)
+        await changeAccountDetails(ctx.req.user, details, password)
             .then((result) =>
             {
                 if (!result) {
