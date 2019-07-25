@@ -4,7 +4,7 @@ const compose = require('koa-compose');
 
 // using 403 responses per this thread: https://stackoverflow.com/a/14713094/4488100
 
-module.exports = function({routes, encrypt, decrypt, localStrategy, changePassword, changeAccountDetails}) {
+module.exports = function({routes, encrypt, decrypt, localStrategy, updateUser, changePassword, changeAccountDetails}) {
 
     if (!encrypt || !decrypt || !localStrategy) {
         throw new Error('Invalid arguments');
@@ -15,28 +15,56 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     if (!routes.logout) routes.logout = '/logout'
     if (!routes.changePassword) routes.changePassword = '/account/changePassword/'
     if (!routes.changeAccountDetails) routes.changeAccountDetails = '/account/changeAccountDetails/';
+    if (!routes.refreshUserContext) routes.refreshUserContext = '/account/refreshUserContext';
     if (!routes.signUp) routes.signUp = '/signup';
+
+    const serializeData = (data) => {
+        const encdata = encrypt(JSON.stringify(data));
+        const buffer = new Buffer(JSON.stringify(encdata));
+        return buffer.toString('base64');
+    }
+
+    const deserializeData = (data) => {
+        const buffer = new Buffer(data, 'base64');
+        const dataObj = JSON.parse(buffer.toString('utf8'));
+        const decryptedData = decrypt(dataObj);
+        return JSON.parse(decryptedData);
+    }
+
+    const renewUser = async function(req, user) {
+        Object.assign(user, await updateUser(user));
+        req.session.user = serializeData(user); //HACK alert -- update the user for the session
+        req._passport.session.user = req.session.user; //HACK alert -- update the passport user, will be sent to cookie
+    };
 
     passport.serializeUser(function(user, done) {
         try {
-            const data = encrypt(JSON.stringify(user));
-            const buffer = new Buffer(JSON.stringify(data));
+            const result = serializeData(user);
 
-            done(null, buffer.toString('base64'));
+            done(null, result);
         } catch(err) {
             done(err);
         }
     });
 
-    passport.deserializeUser(function(data, done) {
+    passport.deserializeUser(async function(req, data, done) {
         try {
-            const buffer = new Buffer(data, 'base64');
-            const dataObj = JSON.parse(buffer.toString('utf8'));
-            const decryptedData = decrypt(dataObj);
-            const user = JSON.parse(decryptedData);
-            done(null, user);
+            let user = deserializeData(data);
+
+            if (req.ctx.refreshUser) {
+                try {
+                    await renewUser(req, user);
+                    done(null, user);
+                } catch(ex) {
+                    done(ex);
+                }
+
+            } else {
+                done(null, user);
+            }
         } catch(err) {
-          done(err);
+          req.logout();
+          req.redirect(routes.login);
         }
     });
 
@@ -45,8 +73,7 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
     const LocalStrategy = require('passport-local').Strategy;
     passport.use(new LocalStrategy(function(username, password, done) {
             localStrategy(username, password)
-            .then((result) =>
-                {
+            .then((result) => {
                     return done(null, result);
                 })
             .catch(done)
@@ -118,10 +145,19 @@ module.exports = function({routes, encrypt, decrypt, localStrategy, changePasswo
 
         }
 
+    const refreshUserContextMiddleware = async (ctx, next) => {
+        ctx.refreshUser = true;
+        await next();
+
+        ctx.status = 204; //no-content, just server action+cookie
+        ctx.body = "";
+    }
+
     this.middleware = () => {
 
         const middleware = [
             passport.initialize(),
+            route.post(routes.refreshUserContext, refreshUserContextMiddleware), //needs to be before passport.session middleware
             passport.session(),
             route.post(routes.login, authenticateMiddleware),
             route.get(routes.logout, logoutMiddleware),
